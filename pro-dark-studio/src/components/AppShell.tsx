@@ -12,28 +12,32 @@ import {
 } from "./primitives/Resizable";
 import { useUIStore } from "@/store/ui";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useGraphStore } from "@/store/graph";
 
 export default function AppShell() {
-  const { selectedDevice, setSelectedDevice } = useUIStore();
+  const { selectedDevice } = useUIStore();
   const { workflow, rules, registry, loadFromSeed } = useWorkspaceStore();
+  const { deleteSelection } = useGraphStore();
 
   useEffect(() => {
     loadFromSeed();
   }, [loadFromSeed]);
 
-  const handleImport = () => {
-    // This would typically open a file dialog.
-    // For now, we'll just re-load the seed data as a stand-in.
-    console.log("Importing JSON...");
-    loadFromSeed();
-  };
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Delete" || e.key === "Backspace") {
+        deleteSelection();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [deleteSelection]);
 
   return (
     <div className="h-screen w-screen bg-bg text-text flex flex-col">
-      <TopBar
-        onImportClick={handleImport}
-        onDeviceChange={setSelectedDevice}
-      />
+      <TopBar />
       <ResizablePanelGroup direction="horizontal" className="flex-1">
         <ResizablePanel defaultSize={20} minSize={15}>
           <Sidebar selectedDevice={selectedDevice} />
