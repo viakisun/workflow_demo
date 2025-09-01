@@ -12,24 +12,31 @@ import {
 import { IconButton } from "./primitives/IconButton";
 import { Button } from "./primitives/Button";
 import { RobotType } from "@/types/core";
+import { useUIStore } from "@/store/ui";
+import { useWorkspaceStore } from "@/store/workspace";
+import { useGraphStore } from "@/store/graph";
 
-type TopBarProps = {
-  onImportClick: () => void;
-  onDeviceChange: (device: RobotType) => void;
-};
+export default function TopBar() {
+  const { setSelectedDevice } = useUIStore();
+  const { loadFromSeed } = useWorkspaceStore();
+  const { addNode, undo, redo } = useGraphStore();
 
-export default function TopBar({ onImportClick, onDeviceChange }: TopBarProps) {
   return (
     <header className="h-14 border-b border-stroke bg-panel-2 flex items-center gap-2 px-3">
-      <Button variant="secondary">+ Add node</Button>
+      <Button
+        variant="secondary"
+        onClick={() => addNode("action", "New Action")}
+      >
+        + Add node
+      </Button>
       <div className="flex items-center gap-1">
         <IconButton icon={Play} label="Play" />
         <IconButton icon={Pause} label="Pause" />
         <IconButton icon={StepForward} label="Step" />
       </div>
       <div className="flex items-center gap-1">
-        <IconButton icon={Undo} label="Undo" />
-        <IconButton icon={Redo} label="Redo" />
+        <IconButton icon={Undo} label="Undo" onClick={undo} />
+        <IconButton icon={Redo} label="Redo" onClick={redo} />
       </div>
       <div className="mx-auto max-w-xl w-full flex items-center gap-2 px-4">
         <Search className="size-4 text-muted" />
@@ -42,7 +49,7 @@ export default function TopBar({ onImportClick, onDeviceChange }: TopBarProps) {
       <div className="flex items-center gap-2">
         <select
           className="bg-panel border border-stroke rounded-lg px-2 py-1.5 text-sm text-text"
-          onChange={(e) => onDeviceChange(e.target.value as RobotType)}
+          onChange={(e) => setSelectedDevice(e.target.value as RobotType)}
           defaultValue="AGV"
         >
           <option value="AGV">AGV</option>
@@ -50,7 +57,7 @@ export default function TopBar({ onImportClick, onDeviceChange }: TopBarProps) {
           <option value="IRR">IRR</option>
           <option value="SCAN">SCAN</option>
         </select>
-        <Button variant="secondary" onClick={onImportClick}>
+        <Button variant="secondary" onClick={loadFromSeed}>
           <Upload className="size-4 mr-2" />
           Import JSON
         </Button>
