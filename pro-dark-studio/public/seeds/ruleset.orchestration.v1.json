@@ -1,0 +1,40 @@
+{
+  "id": "rs_orchestration_main_v1",
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "rule_low_battery_return",
+      "version": "1.0.0",
+      "scope": ["AGV", "SPRAY", "IRR", "SCAN"],
+      "trigger": {
+        "type": "state",
+        "expr": "robot.battery < 0.2"
+      },
+      "actions": [
+        {
+          "type": "plan_route",
+          "dest": "nearest_charger"
+        }
+      ]
+    },
+    {
+      "id": "rule_traffic_avoidance",
+      "version": "1.0.0",
+      "scope": ["AGV"],
+      "trigger": {
+        "type": "event",
+        "expr": "traffic.conflict_detected"
+      },
+      "conditions": [
+        "robot.payload > 0"
+      ],
+      "actions": [
+        {
+          "type": "yield",
+          "target": "lowestPriority",
+          "to": "other_robot_id"
+        }
+      ]
+    }
+  ]
+}

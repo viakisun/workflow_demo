@@ -1,0 +1,26 @@
+{
+  "workflowId": "wf_orchestration_main_v1",
+  "catalogVersion": "2.3.0",
+  "graph": {
+    "lanes": [
+      {
+        "laneId": "agv_lane",
+        "deviceFilter": { "type": "AGV" },
+        "nodes": [
+          { "id": "start", "ref": "TR_START" },
+          { "id": "check_payload", "ref": "CO_CHECK_PAYLOAD" },
+          { "id": "get_mission", "ref": "AC_GET_MISSION" },
+          { "id": "end", "ref": "EN_END" }
+        ],
+        "edges": [
+          ["start", "check_payload"],
+          ["check_payload", "get_mission"],
+          ["get_mission", "end"]
+        ]
+      }
+    ]
+  },
+  "requiredCapabilities": {
+    "AGV": ["carry", "slam_nav"]
+  }
+}
