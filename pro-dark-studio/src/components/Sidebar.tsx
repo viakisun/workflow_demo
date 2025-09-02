@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { clsx } from "clsx";
 import {
   Home,
@@ -8,13 +8,18 @@ import {
   Package,
   ScrollText,
   Settings,
+  Search,
 } from "lucide-react";
+import Fuse from "fuse.js";
 import { Tooltip } from "@/components/primitives/Tooltip";
 import { IconButton } from "./primitives/IconButton";
-import { RobotSpec, NodeRegistryEntry, NodeKind } from "@/types/core";
-import { filterPalette } from "@/lib/palette";
+import { RobotSpec, NodeKind } from "@/types/core";
 import { useWorkspaceStore } from "@/store/workspace";
-import { Badge } from "./primitives/Badge";
+import { useGraphStore } from "@/store/graph";
+import { useUIStore } from "@/store/ui";
+import { checkNodeCapabilities } from "@/lib/capability";
+import { checkNodeConflicts } from "@/lib/conflict";
+import PaletteNodeItem from "./sidebar/PaletteNodeItem";
 
 const navItems = [
   { id: "home", label: "Home", icon: Home },
@@ -24,29 +29,28 @@ const navItems = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-const getNodeColor = (type: NodeKind): "blue" | "yellow" | "green" | "gray" => {
-  switch (type) {
-    case "trigger":
-      return "blue";
-    case "condition":
-      return "yellow";
-    case "action":
-      return "green";
-    case "end":
-      return "gray";
-    default:
-      return "gray";
-  }
-};
+const NODE_GROUPS: NodeKind[] = ["trigger", "condition", "action", "end"];
 
-type SidebarProps = {
-  selectedDevice?: RobotSpec;
-};
-
-export default function Sidebar({ selectedDevice }: SidebarProps) {
+export default function Sidebar() {
   const [active, setActive] = useState("graph");
+  const [searchTerm, setSearchTerm] = useState("");
   const { registry } = useWorkspaceStore();
-  const paletteNodes = filterPalette(registry, selectedDevice);
+  const { selectedDevice } = useUIStore(); // Assuming this is now in a UI store
+  const { nodes: graphNodes } = useGraphStore();
+
+  const fuse = useMemo(
+    () =>
+      new Fuse(registry, {
+        keys: ["title", "nodeId"],
+        threshold: 0.3,
+      }),
+    [registry]
+  );
+
+  const filteredRegistry = useMemo(() => {
+    if (!searchTerm) return registry;
+    return fuse.search(searchTerm).map((result) => result.item);
+  }, [registry, searchTerm, fuse]);
 
   return (
     <div className="flex h-full bg-panel-2 border-r border-stroke">
@@ -68,20 +72,53 @@ export default function Sidebar({ selectedDevice }: SidebarProps) {
           ))}
         </nav>
       </aside>
-      <div className="p-3 border-l border-stroke w-64 flex-grow">
-        <h2 className="text-sm font-semibold mb-2">Node Palette</h2>
-        <div className="space-y-2">
-          {paletteNodes.map((node) => (
-            <div
-              key={node.nodeId}
-              className="p-2 border border-stroke bg-panel rounded-lg cursor-grab hover:bg-panel-2"
-            >
-              <div className="flex justify-between items-center">
-                <p className="text-sm font-semibold">{node.title}</p>
-                <Badge color={getNodeColor(node.type)}>{node.type}</Badge>
+      <div className="p-3 border-l border-stroke w-72 flex flex-col">
+        <h2 className="text-lg font-semibold mb-2">Node Palette</h2>
+        <div className="relative mb-4">
+          <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted" />
+          <input
+            type="text"
+            placeholder="Search nodes..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full bg-panel border border-stroke rounded-lg pl-8 pr-2 py-1.5 text-sm"
+          />
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-4">
+          {NODE_GROUPS.map((group) => {
+            const nodesInGroup = filteredRegistry.filter(
+              (n) => n.type === group
+            );
+            if (nodesInGroup.length === 0) return null;
+            return (
+              <div key={group}>
+                <h3 className="text-xs font-bold uppercase text-muted mb-2">
+                  {group}
+                </h3>
+                <div className="space-y-2">
+                  {nodesInGroup.map((node) => {
+                    const capCheck = checkNodeCapabilities(
+                      node,
+                      selectedDevice
+                    );
+                    const conflictCheck = checkNodeConflicts(
+                      node,
+                      graphNodes,
+                      registry
+                    );
+                    return (
+                      <PaletteNodeItem
+                        key={node.nodeId}
+                        node={node}
+                        capCheck={capCheck}
+                        conflictCheck={conflictCheck}
+                      />
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>

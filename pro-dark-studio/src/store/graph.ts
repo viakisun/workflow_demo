@@ -4,6 +4,7 @@ import { NodeKind } from "@/types/core";
 
 type NodeVM = {
   id: string;
+  ref: string;
   kind: NodeKind;
   title: string;
   x: number;
@@ -25,7 +26,7 @@ type GraphState = {
   history: { past: HistoryState[]; future: HistoryState[] };
   tempEdge?: { fromNode: string; fromSide: "in" | "out"; toMouse: { x: number; y: number } } | null;
   setTransform: (t: GraphState["transform"]) => void;
-  addNode: (kind: NodeKind, title: string) => void;
+  addNode: (ref: string, kind: NodeKind, title: string, x: number, y: number) => void;
   moveNode: (id: string, x: number, y: number) => void;
   deleteSelection: () => void;
   select: (s: { nodes?: string[]; edges?: string[] }) => void;
@@ -53,13 +54,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
 
   setTransform: (t) => set({ transform: t }),
 
-  addNode: (kind, title) => {
+  addNode: (ref, kind, title, x, y) => {
     recordHistory(set, get);
-    const { transform } = get();
-    // Add node to the center of the current view
-    const x = -transform.x / transform.scale + window.innerWidth / 2 / transform.scale - 112;
-    const y = -transform.y / transform.scale + window.innerHeight / 2 / transform.scale - 50;
-    const newNode = { id: nanoid(), kind, title, x, y };
+    const newNode = { id: nanoid(), ref, kind, title, x, y };
     set((s) => ({ nodes: [...s.nodes, newNode] }));
   },
 
