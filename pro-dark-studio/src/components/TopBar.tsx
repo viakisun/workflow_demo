@@ -16,6 +16,8 @@ import { RobotType } from "@/types/core";
 import { useUIStore } from "@/store/ui";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useGraphStore } from "@/store/graph";
+import { useEngineStore } from "@/store/engine";
+import { tick } from "@/lib/engine/engine";
 import ImportMenu from "./io/ImportMenu";
 import ErrorOverlay from "./io/ErrorOverlay";
 import { importJsonFile } from "@/lib/importers";
@@ -34,6 +36,7 @@ export default function TopBar() {
   const { workflow, rules, registry, graphLayout, setDocs, loadSeedData } =
     useWorkspaceStore();
   const { undo, redo } = useGraphStore();
+  const { isRunning, toggleIsRunning } = useEngineStore();
   const [isImportMenuOpen, setImportMenuOpen] = useState(false);
   const [importIssues, setImportIssues] = useState<string[] | null>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
@@ -84,9 +87,17 @@ export default function TopBar() {
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 p-1 bg-panel rounded-lg">
-            <IconButton icon={Play} label="Play" />
-            <IconButton icon={Pause} label="Pause" />
-            <IconButton icon={StepForward} label="Step" />
+            <IconButton
+              icon={isRunning ? Pause : Play}
+              label={isRunning ? "Pause" : "Play"}
+              onClick={toggleIsRunning}
+            />
+            <IconButton
+              icon={StepForward}
+              label="Step"
+              onClick={tick}
+              disabled={isRunning}
+            />
           </div>
           <Divider />
           <div className="flex items-center gap-1">

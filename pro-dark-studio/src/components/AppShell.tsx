@@ -13,16 +13,18 @@ import {
 import { useWorkspaceStore } from "@/store/workspace";
 import { useGraphStore } from "@/store/graph";
 import { useUIStore } from "@/store/ui";
+import { useEngineStore } from "@/store/engine";
 import { ToastProvider } from "./primitives/Toast";
+import EventLog from "./EventLog";
+import { tick } from "@/lib/engine/engine";
 
 export default function AppShell() {
   const { loadSeedData } = useWorkspaceStore();
   const { deleteSelection } = useGraphStore();
   const { selectedDevice } = useUIStore();
+  const { isRunning } = useEngineStore();
 
   useEffect(() => {
-    // Load initial data when the app starts.
-    // The store is persisted, so this will only run if storage is empty.
     const unsub = useWorkspaceStore.subscribe(
       (state) => {
         if (!state.workflow) {
@@ -46,20 +48,37 @@ export default function AppShell() {
     };
   }, [deleteSelection]);
 
+  useEffect(() => {
+    if (!isRunning) return;
+    const interval = setInterval(() => {
+      tick();
+    }, 1000); // Tick every second
+    return () => clearInterval(interval);
+  }, [isRunning]);
+
+
   return (
     <div className="h-screen w-screen bg-bg text-text flex flex-col">
       <TopBar />
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
-        <ResizablePanel defaultSize={20} minSize={15}>
-          <Sidebar selectedDevice={selectedDevice} />
+      <ResizablePanelGroup direction="vertical" className="flex-1">
+        <ResizablePanel defaultSize={75}>
+          <ResizablePanelGroup direction="horizontal">
+            <ResizablePanel defaultSize={20} minSize={15}>
+              <Sidebar selectedDevice={selectedDevice} />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={55}>
+              <Canvas />
+            </ResizablePanel>
+            <ResizableHandle withHandle />
+            <ResizablePanel defaultSize={25} minSize={15}>
+              <Inspector />
+            </ResizablePanel>
+          </ResizablePanelGroup>
         </ResizablePanel>
         <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={55}>
-          <Canvas />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel defaultSize={25} minSize={15}>
-          <Inspector />
+        <ResizablePanel defaultSize={25}>
+          <EventLog />
         </ResizablePanel>
       </ResizablePanelGroup>
       <ToastProvider />

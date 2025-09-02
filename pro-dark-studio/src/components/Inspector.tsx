@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { SegmentedTabs } from "@/components/primitives/SegmentedTabs";
 import JsonPreview from "./inspector/JsonPreview";
 import ParamEditor from "./inspector/ParamEditor";
+import RulesPanel from "./inspector/RulesPanel";
 import { useGraphStore } from "@/store/graph";
 import { useWorkspaceStore } from "@/store/workspace";
 
@@ -75,11 +76,7 @@ export default function Inspector() {
             )}
           </div>
         )}
-        {activeTab === "rules" && (
-          <div className="text-sm text-muted p-4">
-            Rule editing will be implemented in a future step.
-          </div>
-        )}
+        {activeTab === "rules" && <RulesPanel />}
         {activeTab === "json" && <JsonPreview />}
       </div>
     </aside>
