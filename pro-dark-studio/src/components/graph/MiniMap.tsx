@@ -1,5 +1,8 @@
+"use client";
+
 import { useGraphStore } from "@/store/graph";
 import { NodeVM } from "@/store/graph";
+import { useState, useEffect } from "react";
 
 const MiniMapNode = ({ node }: { node: NodeVM }) => {
   const colorByKind = {
@@ -24,6 +27,25 @@ const MiniMapNode = ({ node }: { node: NodeVM }) => {
 
 export default function MiniMap() {
   const { nodes, transform, setTransform } = useGraphStore();
+  const [viewportSize, setViewportSize] = useState({ width: 0, height: 0 });
+
+  useEffect(() => {
+    // This effect runs only on the client, where window is defined.
+    const updateSize = () => {
+      // We use the parent element's size for a more accurate viewport representation
+      const parent = (document.querySelector('[data-canvas-container]') as HTMLElement);
+      if (parent) {
+        setViewportSize({ width: parent.offsetWidth, height: parent.offsetHeight });
+      } else {
+        // Fallback to window size if the canvas container isn't found
+        setViewportSize({ width: window.innerWidth, height: window.innerHeight });
+      }
+    };
+
+    updateSize();
+    window.addEventListener('resize', updateSize);
+    return () => window.removeEventListener('resize', updateSize);
+  }, []);
 
   const handleViewportDrag = (e: React.MouseEvent) => {
     const start = {
@@ -55,16 +77,18 @@ export default function MiniMap() {
         {nodes.map((node) => (
           <MiniMapNode key={node.id} node={node} />
         ))}
-        <div
-          className="absolute border-2 border-emerald-400/70 cursor-grab"
-          style={{
-            left: `${-transform.x / 10}px`,
-            top: `${-transform.y / 10}px`,
-            width: `${window.innerWidth / 10 / transform.scale}px`,
-            height: `${window.innerHeight / 10 / transform.scale}px`,
-          }}
-          onMouseDown={handleViewportDrag}
-        />
+        {viewportSize.width > 0 && (
+          <div
+            className="absolute border-2 border-emerald-400/70 cursor-grab"
+            style={{
+              left: `${-transform.x / 10}px`,
+              top: `${-transform.y / 10}px`,
+              width: `${viewportSize.width / 10 / transform.scale}px`,
+              height: `${viewportSize.height / 10 / transform.scale}px`,
+            }}
+            onMouseDown={handleViewportDrag}
+          />
+        )}
       </div>
     </div>
   );
