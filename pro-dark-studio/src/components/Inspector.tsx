@@ -5,8 +5,18 @@ import { SegmentedTabs } from "@/components/primitives/SegmentedTabs";
 import JsonPreview from "./inspector/JsonPreview";
 import ParamEditor from "./inspector/ParamEditor";
 import RulesPanel from "./inspector/RulesPanel";
+import TimelinePanel from "./inspector/TimelinePanel";
 import { useGraphStore } from "@/store/graph";
 import { useWorkspaceStore } from "@/store/workspace";
+
+// I'm moving KPIs to a separate panel, as per the prompt.
+// The inspector will focus on contextual information.
+const TABS = [
+    { id: "params", label: "Params" },
+    { id: "rules", label: "Rules" },
+    { id: "timeline", label: "Timeline" },
+    { id: "json", label: "JSON" },
+];
 
 export default function Inspector() {
   const [activeTab, setActiveTab] = useState("params");
@@ -52,11 +62,7 @@ export default function Inspector() {
   return (
     <aside className="border-l border-stroke bg-panel-2 p-3 flex flex-col h-full">
       <SegmentedTabs
-        tabs={[
-          { id: "params", label: "Params" },
-          { id: "rules", label: "Rules" },
-          { id: "json", label: "JSON Preview" },
-        ]}
+        tabs={TABS}
         initial="params"
         onTabChange={setActiveTab}
       />
@@ -77,6 +83,7 @@ export default function Inspector() {
           </div>
         )}
         {activeTab === "rules" && <RulesPanel />}
+        {activeTab === "timeline" && <TimelinePanel />}
         {activeTab === "json" && <JsonPreview />}
       </div>
     </aside>

@@ -19,6 +19,12 @@ export type OperatorPrompt = {
     timeoutAction?: ActionSpec;
 };
 
+export type Recording = {
+    initialContext: GlobalContext;
+    initialSeed: number;
+    events: EngineEvent[];
+}
+
 type EngineState = {
   tick: number;
   globalContext: GlobalContext | null;
@@ -29,6 +35,10 @@ type EngineState = {
   seed: number;
   isRunning: boolean;
   pendingPrompts: OperatorPrompt[];
+  isRecording: boolean;
+  isReplaying: boolean;
+  playhead: number;
+  recording: Recording | null;
 
   // Actions
   initialize: (seed: number, context: GlobalContext) => void;
@@ -41,6 +51,10 @@ type EngineState = {
   toggleIsRunning: () => void;
   addPrompt: (prompt: Omit<OperatorPrompt, "id">) => void;
   resolvePrompt: (id: string, resolution: "ack" | "nack") => void;
+  startRecording: () => void;
+  stopRecording: () => void;
+  loadRecording: (recording: Recording) => void;
+  setPlayhead: (tick: number) => void;
   reset: () => void;
 };
 
@@ -52,6 +66,10 @@ const getInitialState = (seed = 0) => ({
   locks: new Set(),
   isRunning: false,
   pendingPrompts: [],
+  isRecording: false,
+  isReplaying: false,
+  playhead: 0,
+  recording: null,
   seed,
   prng: createSeededRandom(seed),
 });
@@ -75,7 +93,19 @@ export const useEngineStore = create<EngineState>((set, get) => ({
       timestamp: Date.now(),
       tick: get().tick,
     };
-    set((state) => ({ eventBus: [newEvent, ...state.eventBus] }));
+    set((state) => {
+        const newBus = [newEvent, ...state.eventBus];
+        if(state.isRecording && state.recording) {
+            return {
+                eventBus: newBus,
+                recording: {
+                    ...state.recording,
+                    events: [...state.recording.events, newEvent]
+                }
+            }
+        }
+        return { eventBus: newBus };
+    });
   },
 
   incrementTick: () => set((state) => ({ tick: state.tick + 1 })),
@@ -101,7 +131,10 @@ export const useEngineStore = create<EngineState>((set, get) => ({
     });
   },
 
-  toggleIsRunning: () => set((state) => ({ isRunning: !state.isRunning })),
+  toggleIsRunning: () => {
+    if(get().isReplaying) return; // Can't run while replaying
+    set((state) => ({ isRunning: !state.isRunning }))
+  },
 
   addPrompt: (prompt) => {
     const newPrompt = { ...prompt, id: nanoid() };
@@ -113,6 +146,47 @@ export const useEngineStore = create<EngineState>((set, get) => ({
     set((state) => ({
       pendingPrompts: state.pendingPrompts.filter((p) => p.id !== id),
     }));
+  },
+
+  startRecording: () => {
+    const { globalContext, seed } = get();
+    if (!globalContext) return;
+    set({
+      isRecording: true,
+      recording: {
+        initialContext: JSON.parse(JSON.stringify(globalContext)), // Deep copy
+        initialSeed: seed,
+        events: [],
+      },
+    });
+  },
+
+  stopRecording: () => {
+    set({ isRecording: false });
+  },
+
+  loadRecording: (recording) => {
+    set({
+      ...getInitialState(recording.initialSeed),
+      recording,
+      isReplaying: true,
+      isRunning: false,
+      globalContext: recording.initialContext,
+    });
+  },
+
+  setPlayhead: (tick) => {
+    if(!get().isReplaying || !get().recording) return;
+
+    // This is the core of the replayer. It re-calculates the context at a given tick.
+    const { initialContext } = get().recording!;
+    let contextAtTick = initialContext;
+
+    // This is a simplified replay. A full implementation would need to re-run
+    // the simulation and rule engine tick-by-tick up to the playhead.
+    // For now, we'll just set the playhead and let the UI components react.
+
+    set({ playhead: tick });
   },
 
   reset: () => {
