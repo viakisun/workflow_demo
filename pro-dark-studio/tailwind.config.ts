@@ -1,5 +1,14 @@
 import type { Config } from "tailwindcss";
 
+function withOpacity(variableName: string) {
+  return ({ opacityValue }: { opacityValue?: number }) => {
+    if (opacityValue !== undefined) {
+      return `hsla(var(${variableName}), ${opacityValue})`;
+    }
+    return `hsl(var(${variableName}))`;
+  };
+}
+
 const config: Config = {
   darkMode: "class",
   content: [
@@ -13,21 +22,21 @@ const config: Config = {
         sans: ["var(--font-sans)", "sans-serif"],
       },
       colors: {
-        bg: "hsl(var(--bg))",
-        panel: "hsl(var(--panel))",
-        "panel-2": "hsl(var(--panel-2))",
-        stroke: "hsl(var(--stroke))",
-        text: "hsl(var(--text))",
-        muted: "hsl(var(--muted))",
-        subtle: "hsl(var(--subtle))",
-        accent: "hsl(var(--accent))",
-        warn: "hsl(var(--warn))",
-        info: "hsl(var(--info))",
-        danger: "hsl(var(--danger))",
-        "node-trigger": "hsl(var(--node-trigger))",
-        "node-condition": "hsl(var(--node-condition))",
-        "node-action": "hsl(var(--node-action))",
-        "node-end": "hsl(var(--node-end))",
+        bg: withOpacity("--bg"),
+        panel: withOpacity("--panel"),
+        "panel-2": withOpacity("--panel-2"),
+        stroke: withOpacity("--stroke"),
+        text: withOpacity("--text"),
+        muted: withOpacity("--muted"),
+        subtle: withOpacity("--subtle"),
+        accent: withOpacity("--accent"),
+        warn: withOpacity("--warn"),
+        info: withOpacity("--info"),
+        danger: withOpacity("--danger"),
+        "node-trigger": withOpacity("--node-trigger"),
+        "node-condition": withOpacity("--node-condition"),
+        "node-action": withOpacity("--node-action"),
+        "node-end": withOpacity("--node-end"),
       },
       borderRadius: {
         DEFAULT: "var(--radius)",
