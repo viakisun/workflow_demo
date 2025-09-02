@@ -5,6 +5,7 @@ import { useGraphStore } from "./graph";
 import { toViewModels } from "@/lib/normalize";
 import { loadSeed } from "@/lib/load-seed";
 import { migrateWorkflow, migrateRegistry, migrateRules } from "@/lib/migrate";
+import { customNodeRegistry } from "@/lib/plugins/registry";
 
 type WorkspaceState = {
   workflow?: Workflow;
@@ -33,7 +34,10 @@ export const useWorkspaceStore = create(
       setDocs: (p, clearLayout = false) => {
         const currentLayout = get().graphLayout;
         const newLayout = clearLayout ? {} : currentLayout;
-        set((s) => ({ ...s, ...p, graphLayout: newLayout }));
+
+        const newRegistry = p.registry ? [...p.registry, ...customNodeRegistry] : get().registry;
+
+        set((s) => ({ ...s, ...p, registry: newRegistry, graphLayout: newLayout }));
 
         const { workflow, registry, graphLayout } = get();
         if (workflow) {

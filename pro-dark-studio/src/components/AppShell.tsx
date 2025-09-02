@@ -21,6 +21,7 @@ import { OperatorPromptContainer } from "./io/OperatorPrompt";
 import { tick } from "@/lib/engine/engine";
 import { loadSeed } from "@/lib/load-seed";
 import { GlobalContext } from "@/types/core";
+import "@/plugins"; // Import plugins to register them
 
 export default function AppShell() {
   const { loadSeedData, workflow } = useWorkspaceStore();
