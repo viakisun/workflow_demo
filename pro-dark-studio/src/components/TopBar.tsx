@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { clsx } from "clsx";
 import {
   Play,
   Pause,
@@ -36,7 +37,7 @@ export default function TopBar() {
   const { workflow, rules, registry, graphLayout, setDocs, loadSeedData } =
     useWorkspaceStore();
   const { undo, redo } = useGraphStore();
-  const { isRunning, toggleIsRunning } = useEngineStore();
+  const { isRunning, toggleIsRunning, isRecording, startRecording, stopRecording } = useEngineStore();
   const [isImportMenuOpen, setImportMenuOpen] = useState(false);
   const [importIssues, setImportIssues] = useState<string[] | null>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
@@ -104,6 +105,14 @@ export default function TopBar() {
             <IconButton icon={Undo} label="Undo" onClick={undo} />
             <IconButton icon={Redo} label="Redo" onClick={redo} />
           </div>
+          <Divider />
+          <Button
+            variant={isRecording ? "destructive" : "secondary"}
+            onClick={isRecording ? stopRecording : startRecording}
+          >
+            <span className={clsx("mr-2 h-2 w-2 rounded-full", isRecording && "bg-red-500 animate-pulse")} />
+            {isRecording ? "Recording" : "Record"}
+          </Button>
         </div>
 
         <div className="flex items-center gap-2">
