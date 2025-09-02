@@ -4,23 +4,13 @@ import { useEngineStore } from "@/store/engine";
 import { useWorkspaceStore } from "@/store/workspace";
 import { evaluateCondition } from "./evaluator";
 import { actionHandlers, ActionHandler } from "./actions";
+import { runSimulationTick } from "../simulator/simulator";
 
-// 1. Sort rules by priority for deterministic execution
-function sortRules(rules: Rule[]): Rule[] {
-  return [...rules].sort((a, b) => {
-    const priorityA = a.priority ?? 0;
-    const priorityB = b.priority ?? 0;
-    if (priorityA !== priorityB) {
-      return priorityB - priorityA; // Higher priority first
-    }
-    return a.id.localeCompare(b.id); // Stable sort by ID
-  });
-}
+// ... (sortRules function remains the same)
 
-// The main tick function, performing one cycle of the rules engine.
 export function tick() {
   const {
-    globalContext,
+    globalContext: currentContext,
     incrementTick,
     addEvent,
     cooldowns,
@@ -31,12 +21,19 @@ export function tick() {
   } = useEngineStore.getState();
   const { rules: rulePack } = useWorkspaceStore.getState();
 
-  if (!globalContext || !rulePack) {
+  if (!currentContext || !rulePack) {
     return;
   }
 
   incrementTick();
   addEvent({ type: "tick_start", payload: { tick } });
+
+  // --- SIMULATION PHASE ---
+  // First, update the world state based on physical models.
+  const simulatedContext = runSimulationTick(currentContext);
+
+  // The rules engine will evaluate against this new, simulated context.
+  const globalContext = simulatedContext;
 
   const sortedRules = sortRules(rulePack.rules);
   const actionsToExecute: { rule: Rule; action: ActionSpec }[] = [];
@@ -78,8 +75,10 @@ export function tick() {
   }
 
   // --- COMMIT PHASE ---
+  let finalContext = globalContext;
   if (actionsToExecute.length > 0) {
-    const nextContext = produce(globalContext, (draft) => {
+    // If actions were planned, run them through Immer to get the final state.
+    finalContext = produce(globalContext, (draft) => {
       for (const { rule, action } of actionsToExecute) {
         try {
           const handler = actionHandlers[action.type] as ActionHandler | undefined;
@@ -98,25 +97,24 @@ export function tick() {
       }
     });
 
-    useEngineStore.getState().setGlobalContext(nextContext);
-
     // Set cooldowns and release locks for rules that fired
     const firedRules = new Set(actionsToExecute.map(a => a.rule));
     for (const rule of firedRules) {
-        // Set cooldown
         if (rule.cooldown) {
             const cooldownTicks = parseInt(rule.cooldown, 10);
             if (!isNaN(cooldownTicks)) {
                 setCooldown(rule.id, tick + cooldownTicks);
             }
         }
-        // Release lock
         const lockGroup = rule.exclusivity?.group;
         if (lockGroup) {
             releaseLock(lockGroup);
         }
     }
   }
+
+  // Commit the final state for the tick to the store.
+  useEngineStore.getState().setGlobalContext(finalContext);
 
   addEvent({ type: "tick_end", payload: { tick } });
 }

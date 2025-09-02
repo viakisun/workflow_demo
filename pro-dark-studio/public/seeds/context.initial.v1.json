@@ -1,0 +1,47 @@
+{
+  "robots": {
+    "agv_1": {
+      "id": "agv_1",
+      "type": "AGV",
+      "capabilities": ["carry", "slam_nav", "weight_cell"],
+      "battery": 1.0,
+      "payload": 0,
+      "zone": "zone_A",
+      "task": "idle",
+      "moving": false
+    },
+    "spray_1": {
+        "id": "spray_1",
+        "type": "SPRAY",
+        "capabilities": ["sprayer_nozzle", "flow_pid", "camera_rgb"],
+        "battery": 0.8,
+        "payload": 1.0,
+        "zone": "zone_B",
+        "task": "idle",
+        "moving": false
+    }
+  },
+  "resources": {
+    "docks": {
+        "dock_1": { "id": "dock_1", "slots": 1, "queue": [] }
+    },
+    "chargers": {
+        "charger_1": { "id": "charger_1", "slots": 1, "queue": [] }
+    },
+    "chemicals_L": 1000,
+    "water_L": 5000
+  },
+  "env": {
+    "wind": 5,
+    "rain": 0,
+    "temp": 25
+  },
+  "traffic": {
+      "occupancy": {},
+      "oneway": {}
+  },
+  "tasks": {
+      "spray_queue": ["zone_C", "zone_D"],
+      "irrigation_queue": []
+  }
+}
