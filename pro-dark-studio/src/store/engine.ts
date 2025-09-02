@@ -1,48 +1,70 @@
 import { create } from "zustand";
-import type { GlobalContext } from "@/types/core";
+import type { GlobalContext, ActionSpec } from "@/types/core";
 import { nanoid } from "nanoid";
+import { createSeededRandom } from "@/lib/simulator/prng";
 
-// A simple event structure for the event bus
 export type EngineEvent = {
   id: string;
   tick: number;
   timestamp: number;
-  type: string; // e.g., "rule_hit", "rule_error", "action_executed"
+  type: string;
   payload: Record<string, any>;
+};
+
+export type OperatorPrompt = {
+    id: string;
+    ruleId: string;
+    message: string;
+    timeout?: string;
+    timeoutAction?: ActionSpec;
 };
 
 type EngineState = {
   tick: number;
   globalContext: GlobalContext | null;
   eventBus: EngineEvent[];
-  cooldowns: Record<string, number>; // ruleId -> tick when cooldown ends
-  locks: Set<string>; // active exclusivity locks
+  cooldowns: Record<string, number>;
+  locks: Set<string>;
+  prng: () => number;
+  seed: number;
+  isRunning: boolean;
+  pendingPrompts: OperatorPrompt[];
 
   // Actions
+  initialize: (seed: number, context: GlobalContext) => void;
   setGlobalContext: (context: GlobalContext) => void;
   addEvent: (event: Omit<EngineEvent, "id" | "timestamp" | "tick">) => void;
   incrementTick: () => void;
   setCooldown: (ruleId: string, endTick: number) => void;
   acquireLock: (lock: string) => boolean;
   releaseLock: (lock: string) => void;
-
-  // For UI to control the engine
-  isRunning: boolean;
   toggleIsRunning: () => void;
+  addPrompt: (prompt: Omit<OperatorPrompt, "id">) => void;
+  resolvePrompt: (id: string, resolution: "ack" | "nack") => void;
   reset: () => void;
 };
 
-const initialState = {
+const getInitialState = (seed = 0) => ({
   tick: 0,
   globalContext: null,
   eventBus: [],
   cooldowns: {},
   locks: new Set(),
   isRunning: false,
-};
+  pendingPrompts: [],
+  seed,
+  prng: createSeededRandom(seed),
+});
 
 export const useEngineStore = create<EngineState>((set, get) => ({
-  ...initialState,
+  ...getInitialState(),
+
+  initialize: (seed, context) => {
+    set({
+      ...getInitialState(seed),
+      globalContext: context,
+    });
+  },
 
   setGlobalContext: (context) => set({ globalContext: context }),
 
@@ -66,23 +88,39 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   acquireLock: (lock) => {
     const { locks } = get();
-    if (locks.has(lock)) {
-      return false; // Lock already held
-    }
-    const newLocks = new Set(locks);
-    newLocks.add(lock);
-    set({ locks: newLocks });
+    if (locks.has(lock)) return false;
+    set((state) => ({ locks: new Set(state.locks).add(lock) }));
     return true;
   },
 
   releaseLock: (lock) => {
-    const { locks } = get();
-    const newLocks = new Set(locks);
-    newLocks.delete(lock);
-    set({ locks: newLocks });
+    set((state) => {
+      const newLocks = new Set(state.locks);
+      newLocks.delete(lock);
+      return { locks: newLocks };
+    });
   },
 
   toggleIsRunning: () => set((state) => ({ isRunning: !state.isRunning })),
 
-  reset: () => set(initialState),
+  addPrompt: (prompt) => {
+    const newPrompt = { ...prompt, id: nanoid() };
+    set((state) => ({ pendingPrompts: [...state.pendingPrompts, newPrompt] }));
+  },
+
+  resolvePrompt: (id, resolution) => {
+    console.log(`Prompt ${id} resolved with ${resolution}`);
+    set((state) => ({
+      pendingPrompts: state.pendingPrompts.filter((p) => p.id !== id),
+    }));
+  },
+
+  reset: () => {
+    const { seed, globalContext } = get();
+    if (globalContext) {
+      get().initialize(seed, globalContext);
+    } else {
+      set(getInitialState(seed));
+    }
+  },
 }));

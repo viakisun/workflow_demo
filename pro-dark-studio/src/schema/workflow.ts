@@ -29,11 +29,12 @@ export const ZNode = z.object({
 export const ZLane = z.object({
   laneId: z.string(),
   deviceFilter: z.union([
-    z.object({ type: z.enum(["AGV","SPRAY","IRR","SCAN"]) }),
+    z.object({ type: z.enum(["AGV", "SPRAY", "IRR", "SCAN"]) }),
     z.object({ id: z.string() }),
   ]),
   nodes: z.array(ZNode).min(1),
   edges: z.array(z.tuple([z.string(), z.string()])),
+  cursors: z.record(z.string()).optional(),
 });
 
 export const ZWorkflow = z.object({
@@ -61,7 +62,10 @@ const ZAction: z.ZodLazy<any> = z.lazy(() =>
     z.object({ type: z.literal("balance_queue"), from: z.array(z.string()), to: z.array(z.string()), policy: z.literal("shortest_queue") }),
     z.object({ type: z.literal("if"), expr: z.string(), then: z.array(ZAction).optional(), else: z.array(ZAction).optional() }),
     z.object({ type: z.literal("log"), fields: z.array(z.string()).optional() }),
-    z.object({ type: z.literal("release"), resource: z.enum(["dock","charger"]), id: z.string() }),
+    z.object({ type: z.literal("release"), resource: z.enum(["dock", "charger"]), id: z.string() }),
+    z.object({ type: z.literal("handoff"), from: z.string(), to: z.string(), at: z.string() }),
+    z.object({ type: z.literal("swap"), from: z.string(), with: z.literal("NEAREST_IDLE"), taskContext: z.array(z.string()) }),
+    z.object({ type: z.literal("operator_prompt"), message: z.string(), timeout: z.string().optional(), timeoutAction: z.lazy(() => ZAction).optional() }),
   ])
 );
 

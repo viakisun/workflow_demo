@@ -1,18 +1,21 @@
-import type { ActionSpec, GlobalContext } from "@/types/core";
+import type { ActionSpec, GlobalContext, RobotSpec } from "@/types/core";
 import { useEngineStore } from "@/store/engine";
 import { WritableDraft } from "immer";
 
-// Action handlers modify a DRAFT of the context.
-// The engine will commit these changes atomically using Immer.
 export type ActionHandler = (
   context: WritableDraft<GlobalContext>,
-  action: ActionSpec
+  action: ActionSpec,
+  ruleId: string
 ) => void;
 
 const plan_route: ActionHandler = (context, action) => {
   if (action.type !== "plan_route") return;
-  console.log(`[Action] Planning route for ${action.to ?? 'any'} to ${action.dest}`);
-  // In a real implementation, this would interact with a navigation system.
+  const robotId = action.to ?? "any";
+  const robot = Object.values(context.robots).find(r => action.to ? r.id === action.to : true);
+  if (robot) {
+    robot.task = `routing to ${action.dest}`;
+    robot.moving = true;
+  }
   useEngineStore.getState().addEvent({ type: "action_plan_route", payload: { ...action } });
 };
 
@@ -38,15 +41,46 @@ const release: ActionHandler = (context, action) => {
     }
 };
 
-// ... other action handlers would go here
+const operator_prompt: ActionHandler = (context, action, ruleId) => {
+    if (action.type !== "operator_prompt") return;
+    useEngineStore.getState().addPrompt({
+        ruleId,
+        message: action.message,
+        timeout: action.timeout,
+        timeoutAction: action.timeoutAction,
+    });
+};
+
+const findNearestIdleRobot = (robots: RobotSpec[], fromRobot: RobotSpec): RobotSpec | undefined => {
+    return robots.find(r => r.id !== fromRobot.id && r.type === fromRobot.type && !r.task);
+}
+
+const swap: ActionHandler = (context, action) => {
+    if (action.type !== "swap") return;
+    const fromRobot = context.robots[action.from];
+    if (!fromRobot) return;
+
+    const withRobot = findNearestIdleRobot(Object.values(context.robots), fromRobot);
+    if (!withRobot) {
+        useEngineStore.getState().addEvent({ type: "action_swap_failed", payload: { reason: "No idle robot found" } });
+        return;
+    }
+
+    fromRobot.swappingWith = withRobot.id;
+    withRobot.swappingWith = fromRobot.id;
+
+    // Naive context swap
+    const fromTask = fromRobot.task;
+    fromRobot.task = "swapping";
+    withRobot.task = fromTask;
+
+    useEngineStore.getState().addEvent({ type: "action_swap_initiated", payload: { from: fromRobot.id, to: withRobot.id } });
+}
 
 export const actionHandlers: Record<string, ActionHandler> = {
   plan_route,
   reserve,
   release,
-  // execute,
-  // dispatch,
-  // if,
-  // log,
-  // ... etc
+  swap,
+  operator_prompt,
 };

@@ -7,6 +7,7 @@ import { useCanvasPanZoom } from "@/hooks/useCanvasPanZoom";
 import { useGraphStore } from "@/store/graph";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useNotificationStore } from "@/store/notification";
+import { useEngineStore } from "@/store/engine";
 import { useMarquee } from "@/hooks/useMarquee";
 import MiniMap from "./MiniMap";
 import { NodeRegistryEntry } from "@/types/core";
@@ -20,6 +21,7 @@ export default function GraphCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const { registry } = useWorkspaceStore();
   const { addNotification } = useNotificationStore();
+  const { globalContext } = useEngineStore();
   const {
     transform,
     nodes,
@@ -156,6 +158,27 @@ export default function GraphCanvas() {
                 onSelect={handleEdgeSelect}
               />
             );
+          })}
+          {globalContext && Object.values(globalContext.robots).map(robot => {
+              if (!robot.swappingWith) return null;
+              const otherRobot = globalContext.robots[robot.swappingWith];
+              if (!otherRobot) return null;
+
+              const robotNode = nodes.find(n => n.id.includes(robot.id.slice(-2)));
+              const otherNode = nodes.find(n => n.id.includes(otherRobot.id.slice(-2)));
+              if(!robotNode || !otherNode) return null;
+
+              return (
+                  <line
+                      key={`${robot.id}-${otherRobot.id}`}
+                      x1={robotNode.x + NODE_WIDTH / 2}
+                      y1={robotNode.y + NODE_HEIGHT / 2}
+                      x2={otherNode.x + NODE_WIDTH / 2}
+                      y2={otherNode.y + NODE_HEIGHT / 2}
+                      className="stroke-amber-400 stroke-2 animate-pulse"
+                      strokeDasharray="5 5"
+                  />
+              )
           })}
           {tempEdge && (() => {
             const fromNode = nodes.find(n => n.id === tempEdge.fromNode);

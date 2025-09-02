@@ -16,25 +16,30 @@ import { useUIStore } from "@/store/ui";
 import { useEngineStore } from "@/store/engine";
 import { ToastProvider } from "./primitives/Toast";
 import EventLog from "./EventLog";
+import KpiPanel from "./kpi/KpiPanel";
+import { OperatorPromptContainer } from "./io/OperatorPrompt";
 import { tick } from "@/lib/engine/engine";
+import { loadSeed } from "@/lib/load-seed";
+import { GlobalContext } from "@/types/core";
 
 export default function AppShell() {
-  const { loadSeedData } = useWorkspaceStore();
+  const { loadSeedData, workflow } = useWorkspaceStore();
   const { deleteSelection } = useGraphStore();
   const { selectedDevice } = useUIStore();
-  const { isRunning } = useEngineStore();
+  const { isRunning, initialize: initializeEngine } = useEngineStore();
 
   useEffect(() => {
-    const unsub = useWorkspaceStore.subscribe(
-      (state) => {
-        if (!state.workflow) {
-          loadSeedData();
-        }
-      },
-      { fireImmediately: true }
-    );
-    return unsub;
-  }, [loadSeedData]);
+    const loadInitialData = async () => {
+      // Only load from seed if the workspace is not already populated (e.g., from localStorage)
+      if (!workflow) {
+        await loadSeedData();
+      }
+      // Always initialize the engine with a fresh context from seed
+      const context = await loadSeed<GlobalContext>("/seeds/context.initial.v1.json");
+      initializeEngine(12345, context);
+    };
+    loadInitialData();
+  }, [loadSeedData, initializeEngine, workflow]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -82,6 +87,8 @@ export default function AppShell() {
         </ResizablePanel>
       </ResizablePanelGroup>
       <ToastProvider />
+      <KpiPanel />
+      <OperatorPromptContainer />
     </div>
   );
 }
