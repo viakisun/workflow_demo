@@ -1,0 +1,50 @@
+[
+  {
+    "nodeId": "TR_START",
+    "type": "trigger",
+    "title": "Start"
+  },
+  {
+    "nodeId": "TR_CRON",
+    "type": "trigger",
+    "title": "Cron Trigger",
+    "paramsSchema": {
+      "cron": { "type": "string", "description": "Cron expression" }
+    }
+  },
+  {
+    "nodeId": "CO_CHECK_PAYLOAD",
+    "type": "condition",
+    "title": "Check Payload",
+    "required": ["weight_cell"]
+  },
+  {
+    "nodeId": "AC_GET_MISSION",
+    "type": "action",
+    "title": "Get Mission",
+    "required": ["slam_nav"]
+  },
+  {
+    "nodeId": "AC_PLAN_ROUTE",
+    "type": "action",
+    "title": "Plan Route",
+    "required": ["slam_nav"]
+  },
+  {
+    "nodeId": "AC_DOCK",
+    "type": "action",
+    "title": "Dock Robot",
+    "required": ["dock"]
+  },
+  {
+    "nodeId": "AC_SPRAY",
+    "type": "action",
+    "title": "Spray Area",
+    "required": ["sprayer_nozzle|flow_pid"]
+  },
+  {
+    "nodeId": "EN_END",
+    "type": "end",
+    "title": "End"
+  }
+]

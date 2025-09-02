@@ -32,6 +32,7 @@ type GraphState = {
   beginConnect: (id: string, side: "in" | "out", e: React.MouseEvent) => void;
   endConnect: (targetId: string) => void;
   updateMousePosition: (e: MouseEvent) => void;
+  setGraph: (graph: { nodes: NodeVM[]; edges: EdgeVM[] }) => void;
   undo: () => void;
   redo: () => void;
 };
@@ -122,5 +123,9 @@ export const useGraphStore = create<GraphState>((set, get) => ({
     const newFuture = future.slice(1);
     const newPast = [...past, { nodes, edges }];
     set({ ...nextState, history: { past: newPast, future: newFuture } });
+  },
+
+  setGraph: (graph) => {
+    set({ nodes: graph.nodes, edges: graph.edges, history: { past: [], future: [] }, selection: { nodes: new Set(), edges: new Set() } });
   },
 }));

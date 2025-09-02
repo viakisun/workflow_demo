@@ -1,12 +1,24 @@
-import { Workflow } from "@/types/core";
-
-export function migrateWorkflow(input: any): Workflow {
-  // For now, we assume the input is the latest version.
-  // In a real app, this would check `input.catalogVersion`
-  // and apply transformations if it's an older version.
-  if (input.catalogVersion && input.catalogVersion < "2.3.0") {
-    console.warn(`Migrating workflow from version ${input.catalogVersion}. This is a stub and does not perform a real migration.`);
-    // Add migration logic here
+export function migrateWorkflow(input: any) {
+  if (
+    input?.graph?.lanes?.[0]?.deviceType &&
+    !input.graph.lanes[0].deviceFilter
+  ) {
+    console.log("Migrating legacy workflow: renaming deviceType to deviceFilter");
+    input.graph.lanes.forEach((l: any) => {
+      l.deviceFilter = { type: l.deviceType };
+      delete l.deviceType;
+    });
+    input.catalogVersion = input.catalogVersion ?? "2.3.0";
   }
-  return input as Workflow;
+  return input;
 }
+
+export const migrateRules = (x: any) => {
+  // Add rule migration logic here if needed in the future
+  return x;
+};
+
+export const migrateRegistry = (x: any) => {
+  // Add registry migration logic here if needed in the future
+  return x;
+};
