@@ -1,32 +1,46 @@
 import { forwardRef } from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 import { clsx } from "clsx";
 
-type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary";
-};
+const buttonVariants = cva(
+  "inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background disabled:opacity-50 disabled:pointer-events-none",
+  {
+    variants: {
+      variant: {
+        primary: "bg-interactive text-white hover:bg-interactive-hover",
+        secondary: "bg-panel-2 border border-stroke text-text hover:bg-stroke",
+        ghost: "hover:bg-panel-2 hover:text-text",
+        link: "underline-offset-4 hover:underline text-text",
+      },
+      size: {
+        default: "h-10 py-2 px-4",
+        sm: "h-9 px-3 rounded-md",
+        lg: "h-11 px-8 rounded-md",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "default",
+    },
+  }
+);
+
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = "primary", ...props }, ref) => {
+  ({ className, variant, size, ...props }, ref) => {
     return (
       <button
+        className={clsx(buttonVariants({ variant, size, className }))}
         ref={ref}
-        className={clsx(
-          "px-4 py-2 rounded-lg text-sm font-semibold transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg",
-          {
-            "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500":
-              variant === "primary",
-            "bg-panel border border-stroke text-text hover:bg-panel-2":
-              variant === "secondary",
-          },
-          className
-        )}
         {...props}
       />
     );
   }
 );
-
 Button.displayName = "Button";
 
-export { Button };
+export { Button, buttonVariants };

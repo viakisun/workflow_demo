@@ -7,7 +7,6 @@ import {
   StepForward,
   Undo,
   Redo,
-  Search,
   Upload,
   Download,
 } from "lucide-react";
@@ -17,6 +16,8 @@ import { RobotType } from "@/types/core";
 import { useUIStore } from "@/store/ui";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useGraphStore } from "@/store/graph";
+import { useEngineStore } from "@/store/engine";
+import { tick } from "@/lib/engine/engine";
 import ImportMenu from "./io/ImportMenu";
 import ErrorOverlay from "./io/ErrorOverlay";
 import { importJsonFile } from "@/lib/importers";
@@ -28,11 +29,14 @@ import {
 } from "@/lib/migrate";
 import { exportProject } from "@/lib/exporter";
 
+const Divider = () => <div className="w-px h-6 bg-stroke mx-2" />;
+
 export default function TopBar() {
   const { setSelectedDevice } = useUIStore();
   const { workflow, rules, registry, graphLayout, setDocs, loadSeedData } =
     useWorkspaceStore();
-  const { addNode, undo, redo } = useGraphStore();
+  const { undo, redo } = useGraphStore();
+  const { isRunning, toggleIsRunning } = useEngineStore();
   const [isImportMenuOpen, setImportMenuOpen] = useState(false);
   const [importIssues, setImportIssues] = useState<string[] | null>(null);
   const importMenuRef = useRef<HTMLDivElement>(null);
@@ -74,41 +78,35 @@ export default function TopBar() {
 
   return (
     <>
-      <header className="h-14 border-b border-stroke bg-panel-2 flex items-center gap-2 px-3 flex-shrink-0">
-        <Button
-          variant="secondary"
-          onClick={() => addNode("action", "New Action")}
-        >
-          + Add node
-        </Button>
-        <div className="flex items-center gap-1">
-          <IconButton icon={Play} label="Play" />
-          <IconButton icon={Pause} label="Pause" />
-          <IconButton icon={StepForward} label="Step" />
-        </div>
-        <div className="flex items-center gap-1">
-          <IconButton icon={Undo} label="Undo" onClick={undo} />
-          <IconButton icon={Redo} label="Redo" onClick={redo} />
-        </div>
-        <div className="mx-auto max-w-xl w-full flex items-center gap-2 px-4">
-          <Search className="size-4 text-muted" />
-          <input
-            aria-label="Search"
-            placeholder="Search nodes..."
-            className="w-full bg-transparent text-sm focus:outline-none"
-          />
-        </div>
+      <header className="h-14 border-b border-stroke bg-panel-2 flex items-center justify-between px-4 flex-shrink-0">
         <div className="flex items-center gap-2">
-          <select
-            className="bg-panel border border-stroke rounded-lg px-2 py-1.5 text-sm text-text"
-            onChange={(e) => setSelectedDevice(e.target.value as RobotType)}
-            defaultValue="AGV"
-          >
-            <option value="AGV">AGV</option>
-            <option value="SPRAY">SPRAY</option>
-            <option value="IRR">IRR</option>
-            <option value="SCAN">SCAN</option>
-          </select>
+          {/* Placeholder for Logo/Project Name */}
+          <div className="size-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500" />
+          <h1 className="font-semibold text-lg">Agri-Workflow</h1>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 p-1 bg-panel rounded-lg">
+            <IconButton
+              icon={isRunning ? Pause : Play}
+              label={isRunning ? "Pause" : "Play"}
+              onClick={toggleIsRunning}
+            />
+            <IconButton
+              icon={StepForward}
+              label="Step"
+              onClick={tick}
+              disabled={isRunning}
+            />
+          </div>
+          <Divider />
+          <div className="flex items-center gap-1">
+            <IconButton icon={Undo} label="Undo" onClick={undo} />
+            <IconButton icon={Redo} label="Redo" onClick={redo} />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
           <div className="relative">
             <Button
               variant="secondary"
@@ -135,10 +133,19 @@ export default function TopBar() {
             <Download className="size-4 mr-2" />
             Export
           </Button>
-          <div
-            className="size-8 rounded-full bg-gradient-to-br from-emerald-500 to-sky-500"
-            aria-label="User avatar"
-          />
+          <Divider />
+          <select
+            className="bg-panel border border-stroke rounded-lg px-2 py-1.5 text-sm text-text"
+            onChange={(e) => setSelectedDevice(e.target.value as RobotType)}
+            defaultValue="AGV"
+          >
+            <option value="AGV">AGV</option>
+            <option value="SPRAY">SPRAY</option>
+            <option value="IRR">IRR</option>
+            <option value="SCAN">SCAN</option>
+          </select>
+          {/* Placeholder for user avatar */}
+          <div className="size-8 rounded-full bg-slate-600" />
         </div>
       </header>
       {importIssues && (
