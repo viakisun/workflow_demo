@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Agri-Workflow Studio
 
-## Getting Started
+This is a visual editor and simulator for building complex, multi-robot workflows for agricultural applications. It features a node-based graph editor, a dynamic rules engine, and an observability and timeline suite.
 
-First, run the development server:
+## Quick Start
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+1.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+2.  **Run the development server:**
+    ```bash
+    npm run dev
+    ```
+3.  Open [http://localhost:3000](http://localhost:3000) with your browser. The studio will load with an example project.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Features
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+-   **Visual Graph Editor:** Build workflows by dragging nodes from the palette onto the canvas and connecting them.
+-   **Dynamic Rules Engine:** Define complex logic using a powerful rules engine that reacts to the state of the simulation.
+-   **Deterministic Simulator:** Run deterministic simulations of your robots and resources.
+-   **Observability Suite:** A detailed event log, KPI dashboard, and timeline replayer to debug and analyze your workflows.
+-   **Plugin API:** Extend the studio with your own custom nodes and rules.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## How to...
 
-## Learn More
+### Add a Plugin
+1. Create a new file in `src/plugins`, e.g., `my_plugin.ts`.
+2. Use the `registerNode` and `registerAction` functions from `@/lib/plugins/api` to define your custom logic.
+3. Import your new plugin file in `src/plugins/index.ts`.
 
-To learn more about Next.js, take a look at the following resources:
+### Write a Rule
+Rules are defined in JSON. See `public/seeds/ruleset.orchestration.v1.json` for an example. The rules engine supports state-based triggers, conditions, and a variety of actions.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Record & Replay
+Use the "Record" button in the top bar to start and stop recording a simulation. The "Timeline" tab in the inspector can be used to scrub through the recorded session.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Keyboard Shortcuts
 
-## Deploy on Vercel
+-   **Delete:** Delete selected nodes/edges.
+-   (More to be added)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*This project was bootstrapped with [Next.js](https://nextjs.org).*
