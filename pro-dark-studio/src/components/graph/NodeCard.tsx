@@ -2,6 +2,7 @@ import { clsx } from "clsx";
 import { snapToGrid } from "@/lib/geometry";
 import { NodeKind } from "@/types/core";
 import { PortHandle } from "./PortHandle";
+import { Zap, GitBranch, Play, Flag } from "lucide-react";
 
 type Props = {
   id: string;
@@ -17,15 +18,16 @@ type Props = {
   onSelect: (id: string, shiftKey: boolean) => void;
 };
 
-const colorByKind = {
-  trigger: "bg-node-trigger",
-  condition: "bg-node-condition",
-  action: "bg-node-action",
-  end: "bg-node-end",
+const nodeInfoByKind = {
+  trigger: { color: "bg-node-trigger", icon: Zap },
+  condition: { color: "bg-node-condition", icon: GitBranch },
+  action: { color: "bg-node-action", icon: Play },
+  end: { color: "bg-node-end", icon: Flag },
 };
 
 export default function NodeCard(p: Props) {
   const style = { transform: `translate(${p.x}px, ${p.y}px)` };
+  const info = nodeInfoByKind[p.kind];
 
   const onMouseDown = (e: React.MouseEvent) => {
     if ((e.target as HTMLElement).closest("[data-port]")) return;
@@ -51,22 +53,32 @@ export default function NodeCard(p: Props) {
       data-node
       data-node-id={p.id}
       className={clsx(
-        "absolute select-none rounded-xl shadow-md border border-stroke w-56",
-        "bg-panel",
-        p.selected && "ring-2 ring-emerald-400/70"
+        "absolute select-none rounded-xl border border-stroke w-56 group",
+        "bg-panel shadow-md transition-shadow duration-200",
+        p.selected && "ring-2 ring-interactive shadow-glow-sm"
       )}
       style={style}
       onMouseDown={onMouseDown}
     >
       <div
         className={clsx(
-          "h-7 rounded-t-xl px-2 text-xs font-semibold text-white flex items-center",
-          colorByKind[p.kind]
+          "h-8 rounded-t-xl px-3 flex items-center gap-2",
+          info.color
         )}
       >
-        {p.title}
+        <info.icon className="size-4 text-white/80" />
+        <span className="text-sm font-semibold text-white">{p.title}</span>
       </div>
-      <div className="p-2 text-[11px] text-muted">Node ID: {p.id}</div>
+      <div className="p-3 text-xs text-muted space-y-2">
+        <div>
+          <div className="font-bold uppercase text-muted/50 text-[10px]">ID</div>
+          <div className="font-mono">{p.id}</div>
+        </div>
+        <div>
+          <div className="font-bold uppercase text-muted/50 text-[10px]">Ref</div>
+          <div className="font-mono">{p.ref}</div>
+        </div>
+      </div>
 
       <PortHandle
         side="in"

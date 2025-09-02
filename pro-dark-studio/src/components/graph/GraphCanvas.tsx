@@ -6,6 +6,7 @@ import EdgePath from "./EdgePath";
 import { useCanvasPanZoom } from "@/hooks/useCanvasPanZoom";
 import { useGraphStore } from "@/store/graph";
 import { useWorkspaceStore } from "@/store/workspace";
+import { useNotificationStore } from "@/store/notification";
 import { useMarquee } from "@/hooks/useMarquee";
 import MiniMap from "./MiniMap";
 import { NodeRegistryEntry } from "@/types/core";
@@ -18,6 +19,7 @@ const NODE_HEIGHT = 96;
 export default function GraphCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
   const { registry } = useWorkspaceStore();
+  const { addNotification } = useNotificationStore();
   const {
     transform,
     nodes,
@@ -44,8 +46,10 @@ export default function GraphCanvas() {
 
     const conflictCheck = checkNodeConflicts(node, nodes, registry);
     if (!conflictCheck.enabled) {
-      console.warn("Conflict detected:", conflictCheck.details);
-      // TODO: Show toast notification
+      addNotification({
+        type: "warning",
+        message: `Conflict detected: ${conflictCheck.details?.join(", ")}`,
+      });
       return;
     }
 

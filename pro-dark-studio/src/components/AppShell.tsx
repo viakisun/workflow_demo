@@ -13,6 +13,7 @@ import {
 import { useWorkspaceStore } from "@/store/workspace";
 import { useGraphStore } from "@/store/graph";
 import { useUIStore } from "@/store/ui";
+import { ToastProvider } from "./primitives/Toast";
 
 export default function AppShell() {
   const { loadSeedData } = useWorkspaceStore();
@@ -61,6 +62,7 @@ export default function AppShell() {
           <Inspector />
         </ResizablePanel>
       </ResizablePanelGroup>
+      <ToastProvider />
     </div>
   );
 }

@@ -2,20 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0F1115;
-  --panel: #12151D;
-  --panel-2: #171B23;
-  --stroke: #232838;
-  --text: #E5E7EB;
-  --muted: #9AA4B2;
-  --node-trigger: #3B82F6;
-  --node-condition: #F59E0B;
-  --node-action: #10B981;
-  --node-end: #6B7280;
+@layer base {
+  :root {
+    --background: hsl(222 47% 11%);
+    --foreground: hsl(215 25% 90%);
+
+    --panel: hsl(222 47% 13%);
+    --panel-foreground: hsl(215 25% 90%);
+
+    --panel-2: hsl(222 47% 15%);
+
+    --primary: hsl(217 91% 60%);
+    --primary-foreground: hsl(215 25% 90%);
+
+    --secondary: hsl(222 47% 15%);
+    --secondary-foreground: hsl(215 25% 90%);
+
+    --muted: hsl(217 19% 67%);
+    --muted-foreground: hsl(215 25% 90% / 0.5);
+
+    --border: hsl(222 47% 25%);
+    --input: hsl(222 47% 25%);
+    --ring: hsl(217 91% 60%);
+
+    --radius: 0.75rem;
+  }
 }
 
-body {
-  background-color: var(--bg);
-  color: var(--text);
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
 }

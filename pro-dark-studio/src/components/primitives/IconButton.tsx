@@ -1,27 +1,24 @@
 import { forwardRef } from "react";
-import { clsx } from "clsx";
+import { Button, ButtonProps } from "./Button";
 import type { LucideProps } from "lucide-react";
 
-type IconButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+type IconButtonProps = ButtonProps & {
   icon: React.ComponentType<LucideProps>;
   label: string;
 };
 
 const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
-  ({ className, icon: Icon, label, ...props }, ref) => {
+  ({ icon: Icon, label, ...props }, ref) => {
     return (
-      <button
+      <Button
         ref={ref}
+        variant="ghost"
+        size="icon"
         aria-label={label}
-        className={clsx(
-          "size-9 flex items-center justify-center rounded-lg text-muted hover:text-text hover:bg-panel-2 transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-bg focus-visible:ring-blue-500",
-          className
-        )}
         {...props}
       >
         <Icon className="size-5" />
-      </button>
+      </Button>
     );
   }
 );
