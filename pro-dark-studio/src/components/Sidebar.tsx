@@ -13,7 +13,7 @@ import { Tooltip } from "@/components/primitives/Tooltip";
 import { IconButton } from "./primitives/IconButton";
 import { RobotSpec, NodeRegistryEntry, NodeKind } from "@/types/core";
 import { filterPalette } from "@/lib/palette";
-import { NODE_REGISTRY } from "@/lib/node-registry";
+import { useWorkspaceStore } from "@/store/workspace";
 import { Badge } from "./primitives/Badge";
 
 const navItems = [
@@ -45,7 +45,8 @@ type SidebarProps = {
 
 export default function Sidebar({ selectedDevice }: SidebarProps) {
   const [active, setActive] = useState("graph");
-  const paletteNodes = filterPalette(NODE_REGISTRY, selectedDevice);
+  const { registry } = useWorkspaceStore();
+  const paletteNodes = filterPalette(registry, selectedDevice);
 
   return (
     <div className="flex h-full bg-panel-2 border-r border-stroke">

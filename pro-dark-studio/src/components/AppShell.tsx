@@ -10,18 +10,28 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "./primitives/Resizable";
-import { useUIStore } from "@/store/ui";
 import { useWorkspaceStore } from "@/store/workspace";
 import { useGraphStore } from "@/store/graph";
+import { useUIStore } from "@/store/ui";
 
 export default function AppShell() {
-  const { selectedDevice } = useUIStore();
-  const { workflow, rules, registry, loadFromSeed } = useWorkspaceStore();
+  const { loadSeedData } = useWorkspaceStore();
   const { deleteSelection } = useGraphStore();
+  const { selectedDevice } = useUIStore();
 
   useEffect(() => {
-    loadFromSeed();
-  }, [loadFromSeed]);
+    // Load initial data when the app starts.
+    // The store is persisted, so this will only run if storage is empty.
+    const unsub = useWorkspaceStore.subscribe(
+      (state) => {
+        if (!state.workflow) {
+          loadSeedData();
+        }
+      },
+      { fireImmediately: true }
+    );
+    return unsub;
+  }, [loadSeedData]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,7 +58,7 @@ export default function AppShell() {
         </ResizablePanel>
         <ResizableHandle withHandle />
         <ResizablePanel defaultSize={25} minSize={15}>
-          <Inspector workflow={workflow} rules={rules} registry={registry} />
+          <Inspector />
         </ResizablePanel>
       </ResizablePanelGroup>
     </div>
