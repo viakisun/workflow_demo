@@ -48,6 +48,7 @@ export default function NodeCard(p: Props) {
   return (
     <div
       data-node
+      data-node-id={p.id}
       className={clsx(
         "absolute select-none rounded-xl shadow-md border border-stroke w-56",
         "bg-panel",

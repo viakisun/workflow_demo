@@ -1,12 +1,15 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import NodeCard from "./NodeCard";
 import EdgePath from "./EdgePath";
 import { useCanvasPanZoom } from "@/hooks/useCanvasPanZoom";
 import { useGraphStore } from "@/store/graph";
 import { useMarquee } from "@/hooks/useMarquee";
 import MiniMap from "./MiniMap";
+
+const NODE_WIDTH = 224;
+const NODE_HEIGHT = 96; // Approximate height
 
 export default function GraphCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
@@ -19,44 +22,75 @@ export default function GraphCanvas() {
     moveNode,
     select,
     beginConnect,
+    endConnect,
+    updateMousePosition,
   } = useGraphStore();
 
   useCanvasPanZoom(canvasRef);
-  const marquee = useMarquee(canvasRef, true);
+  const marquee = useMarquee(canvasRef, !tempEdge); // Disable marquee when connecting
+
+  useEffect(() => {
+    if (!tempEdge) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      updateMousePosition(e);
+    };
+    const handleMouseUp = (e: MouseEvent) => {
+      const targetElement = (e.target as HTMLElement).closest('[data-node-id]');
+      const targetId = targetElement?.getAttribute('data-node-id');
+      endConnect(targetId ?? "");
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [tempEdge, updateMousePosition, endConnect]);
 
   const handleNodeSelect = (nodeId: string, shiftKey: boolean) => {
     const newSelection = new Set(selection.nodes);
     if (shiftKey) {
-      if (newSelection.has(nodeId)) {
-        newSelection.delete(nodeId);
-      } else {
-        newSelection.add(nodeId);
-      }
+      newSelection.has(nodeId)
+        ? newSelection.delete(nodeId)
+        : newSelection.add(nodeId);
     } else {
       newSelection.clear();
       newSelection.add(nodeId);
     }
-    select({ nodes: Array.from(newSelection) });
+    select({ nodes: Array.from(newSelection), edges: [] });
   };
 
   const handleEdgeSelect = (edgeId: string, shiftKey: boolean) => {
     const newSelection = new Set(selection.edges);
     if (shiftKey) {
-      if (newSelection.has(edgeId)) {
-        newSelection.delete(edgeId);
-      } else {
-        newSelection.add(edgeId);
-      }
+      newSelection.has(edgeId)
+        ? newSelection.delete(edgeId)
+        : newSelection.add(edgeId);
     } else {
       newSelection.clear();
       newSelection.add(edgeId);
     }
-    select({ edges: Array.from(newSelection) });
+    select({ edges: Array.from(newSelection), nodes: [] });
   };
 
+  const getNodePortPosition = (node: any, side: "in" | "out") => {
+    const y = node.y + NODE_HEIGHT / 2;
+    const x = side === 'in' ? node.x : node.x + NODE_WIDTH;
+    return { x, y };
+  }
+
   return (
-    <div ref={canvasRef} className="relative overflow-hidden bg-panel h-full">
-      {/* Dotted grid */}
+    <div
+      ref={canvasRef}
+      className="relative overflow-hidden bg-panel h-full"
+      data-canvas-container
+      onMouseDown={(e) => {
+        if (!e.target || !(e.target as HTMLElement).closest('[data-node]')) {
+          select({ nodes: [], edges: [] })
+        }
+      }}
+    >
       <div
         className="absolute inset-0 bg-repeat"
         style={{
@@ -67,36 +101,49 @@ export default function GraphCanvas() {
         }}
       />
 
-      <svg className="absolute inset-0 w-full h-full">
+      <svg className="absolute inset-0 w-full h-full pointer-events-none">
         <g style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
-          {edges.map((e) => (
-            <EdgePath
-              key={e.id}
-              id={e.id}
-              sourceX={e.a.x}
-              sourceY={e.a.y}
-              targetX={e.b.x}
-              targetY={e.b.y}
-              selected={selection.edges.has(e.id)}
-              onSelect={handleEdgeSelect}
-            />
-          ))}
-          {tempEdge && (
-            <EdgePath
-              id="temp-edge"
-              sourceX={tempEdge.a.x}
-              sourceY={tempEdge.a.y}
-              targetX={tempEdge.b.x}
-              targetY={tempEdge.b.y}
-            />
-          )}
+          {edges.map((e) => {
+            const fromNode = nodes.find((n) => n.id === e.from);
+            const toNode = nodes.find((n) => n.id === e.to);
+            if (!fromNode || !toNode) return null;
+
+            const source = getNodePortPosition(fromNode, 'out');
+            const target = getNodePortPosition(toNode, 'in');
+
+            return (
+              <EdgePath
+                key={e.id}
+                id={e.id}
+                sourceX={source.x}
+                sourceY={source.y}
+                targetX={target.x}
+                targetY={target.y}
+                selected={selection.edges.has(e.id)}
+                onSelect={handleEdgeSelect}
+              />
+            );
+          })}
+          {tempEdge && (() => {
+            const fromNode = nodes.find(n => n.id === tempEdge.fromNode);
+            if (!fromNode) return null;
+            const source = getNodePortPosition(fromNode, tempEdge.fromSide);
+            return (
+              <EdgePath
+                id="temp-edge"
+                sourceX={source.x}
+                sourceY={source.y}
+                targetX={tempEdge.toMouse.x}
+                targetY={tempEdge.toMouse.y}
+              />
+            )
+          })()}
         </g>
       </svg>
 
       <div
         className="absolute inset-0"
         style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "0 0" }}
-        onMouseDown={() => select({ nodes: [], edges: [] })}
       >
         {nodes.map((n) => (
           <NodeCard
@@ -109,13 +156,13 @@ export default function GraphCanvas() {
             scale={transform.scale}
             selected={selection.nodes.has(n.id)}
             onMove={moveNode}
-            onPortDragStart={(id, side, e) => beginConnect(id, side, e, transform)}
+            onPortDragStart={beginConnect}
             onSelect={handleNodeSelect}
           />
         ))}
         {marquee && (
           <div
-            className="absolute bg-blue-500/20 border border-blue-500"
+            className="absolute bg-blue-500/20 border border-blue-500 pointer-events-none"
             style={{
               left: marquee.x,
               top: marquee.y,
