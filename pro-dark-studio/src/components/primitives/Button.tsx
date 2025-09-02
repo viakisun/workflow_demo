@@ -3,21 +3,20 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { clsx } from "clsx";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background disabled:opacity-50 disabled:pointer-events-none",
+  "inline-flex items-center justify-center rounded-lg text-sm font-semibold transition-all duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/40 disabled:opacity-40 disabled:pointer-events-none active:translate-y-px",
   {
     variants: {
       variant: {
-        primary: "bg-interactive text-white hover:bg-interactive-hover",
-        secondary: "bg-panel-2 border border-stroke text-text hover:bg-stroke",
-        destructive: "bg-danger text-white hover:bg-danger/90",
-        ghost: "hover:bg-panel-2 hover:text-text",
-        link: "underline-offset-4 hover:underline text-text",
+        primary: "bg-info text-white shadow-sm hover:brightness-110",
+        subtle: "bg-panel-2 border border-stroke text-muted hover:text-text hover:border-info/50",
+        ghost: "text-muted hover:bg-panel-2 hover:text-text",
+        destructive: "bg-danger text-white hover:brightness-110",
       },
       size: {
-        default: "h-10 py-2 px-4",
-        sm: "h-9 px-3 rounded-md",
-        lg: "h-11 px-8 rounded-md",
-        icon: "h-10 w-10",
+        default: "h-9 px-4", // 36px
+        sm: "h-8 px-3 rounded-md", // 32px
+        lg: "h-10 px-8 rounded-md", // 40px
+        icon: "h-9 w-9", // 36px
       },
     },
     defaultVariants: {
