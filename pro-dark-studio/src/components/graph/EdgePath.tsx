@@ -1,5 +1,5 @@
-import { getCubicBezierPath } from "@/lib/geometry";
 import { clsx } from "clsx";
+import { X } from "lucide-react";
 
 type EdgePathProps = {
   id: string;
@@ -9,6 +9,7 @@ type EdgePathProps = {
   targetY: number;
   selected?: boolean;
   onSelect?: (id: string, shiftKey: boolean) => void;
+  onDelete?: (id: string) => void;
 };
 
 export default function EdgePath({
@@ -19,11 +20,15 @@ export default function EdgePath({
   targetY,
   selected,
   onSelect,
+  onDelete,
 }: EdgePathProps) {
-  const d = getCubicBezierPath(sourceX, sourceY, targetX, targetY);
+  // Simple orthogonal pathing
+  const midX = sourceX + (targetX - sourceX) / 2;
+  const d = `M ${sourceX},${sourceY} L ${midX},${sourceY} L ${midX},${targetY} L ${targetX},${targetY}`;
 
   return (
     <g
+      className="group"
       onMouseDown={(e) => {
         e.stopPropagation();
         onSelect?.(id, e.shiftKey);
@@ -32,36 +37,35 @@ export default function EdgePath({
       <path
         d={d}
         className={clsx(
-          "fill-none stroke-slate-500 hover:stroke-slate-300",
-          selected && "stroke-emerald-400/70"
+          "fill-none stroke-subtle transition-all duration-fast",
+          "group-hover:stroke-muted",
+          selected && "stroke-info/60"
         )}
-        strokeWidth={2}
+        strokeWidth={1.5}
       />
-      {/* Hit area */}
       <path d={d} className="stroke-transparent fill-none" strokeWidth={16} />
-      {/* Arrowhead */}
-      <defs>
-        <marker
-          id="arrowhead"
-          viewBox="0 0 10 10"
-          refX="9"
-          refY="5"
-          markerWidth="6"
-          markerHeight="6"
-          orient="auto-start-reverse"
-        >
-          <path d="M 0 0 L 10 5 L 0 10 z" className={clsx(
-            "fill-slate-500",
-            selected && "fill-emerald-400/70"
-          )} />
-        </marker>
-      </defs>
+
       <path
         d={d}
         stroke="transparent"
         fill="none"
-        markerEnd="url(#arrowhead)"
+        markerEnd={`url(#arrowhead-${selected ? 'selected' : 'default'})`}
       />
+
+      <foreignObject
+        x={midX - 12}
+        y={sourceY + (targetY - sourceY) / 2 - 12}
+        width="24"
+        height="24"
+        className="opacity-0 group-hover:opacity-100 transition-opacity duration-fast pointer-events-auto"
+      >
+        <button
+            className="p-1 rounded-full bg-panel-2 hover:bg-danger text-muted hover:text-white"
+            onClick={() => onDelete?.(id)}
+        >
+            <X className="size-4" />
+        </button>
+      </foreignObject>
     </g>
   );
 }

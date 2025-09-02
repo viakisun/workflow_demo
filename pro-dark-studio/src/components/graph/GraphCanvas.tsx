@@ -30,6 +30,7 @@ export default function GraphCanvas() {
     tempEdge,
     moveNode,
     select,
+    deleteSelection,
     beginConnect,
     endConnect,
     updateMousePosition,
@@ -107,6 +108,13 @@ export default function GraphCanvas() {
     select({ edges: Array.from(newSelection), nodes: [] });
   };
 
+  const handleEdgeDelete = (edgeId: string) => {
+    select({ edges: [edgeId], nodes: [] });
+    // This is a bit of a hack. The deleteSelection action will delete the selected edge.
+    // A better way would be a dedicated deleteEdge action.
+    setTimeout(() => deleteSelection(), 0);
+  };
+
   const getNodePortPosition = (node: any, side: "in" | "out") => {
     const y = node.y + NODE_HEIGHT / 2;
     const x = side === 'in' ? node.x : node.x + NODE_WIDTH;
@@ -137,6 +145,14 @@ export default function GraphCanvas() {
       />
 
       <svg className="absolute inset-0 w-full h-full pointer-events-none">
+        <defs>
+            <marker id="arrowhead-default" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" className="fill-subtle" />
+            </marker>
+            <marker id="arrowhead-selected" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" className="fill-info/60" />
+            </marker>
+        </defs>
         <g style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})` }}>
           {edges.map((e) => {
             const fromNode = nodes.find((n) => n.id === e.from);
@@ -156,6 +172,7 @@ export default function GraphCanvas() {
                 targetY={target.y}
                 selected={selection.edges.has(e.id)}
                 onSelect={handleEdgeSelect}
+                onDelete={handleEdgeDelete}
               />
             );
           })}
@@ -208,6 +225,7 @@ export default function GraphCanvas() {
             ref={n.ref}
             kind={n.kind}
             title={n.title}
+            subtitle={n.ref}
             x={n.x}
             y={n.y}
             scale={transform.scale}
