@@ -1,9 +1,23 @@
 import { create } from "zustand";
-import type { GlobalContext } from "@/types/core";
+import type { GlobalContext, ActionSpec } from "@/types/core";
 import { nanoid } from "nanoid";
 import { createSeededRandom } from "@/lib/simulator/prng";
 
-// ... (EngineEvent type remains the same)
+export type EngineEvent = {
+  id: string;
+  tick: number;
+  timestamp: number;
+  type: string;
+  payload: Record<string, any>;
+};
+
+export type OperatorPrompt = {
+    id: string;
+    ruleId: string;
+    message: string;
+    timeout?: string;
+    timeoutAction?: ActionSpec;
+};
 
 type EngineState = {
   tick: number;
@@ -14,6 +28,7 @@ type EngineState = {
   prng: () => number;
   seed: number;
   isRunning: boolean;
+  pendingPrompts: OperatorPrompt[];
 
   // Actions
   initialize: (seed: number, context: GlobalContext) => void;
@@ -24,6 +39,8 @@ type EngineState = {
   acquireLock: (lock: string) => boolean;
   releaseLock: (lock: string) => void;
   toggleIsRunning: () => void;
+  addPrompt: (prompt: Omit<OperatorPrompt, "id">) => void;
+  resolvePrompt: (id: string, resolution: "ack" | "nack") => void;
   reset: () => void;
 };
 
@@ -34,6 +51,7 @@ const getInitialState = (seed = 0) => ({
   cooldowns: {},
   locks: new Set(),
   isRunning: false,
+  pendingPrompts: [],
   seed,
   prng: createSeededRandom(seed),
 });
@@ -85,10 +103,22 @@ export const useEngineStore = create<EngineState>((set, get) => ({
 
   toggleIsRunning: () => set((state) => ({ isRunning: !state.isRunning })),
 
+  addPrompt: (prompt) => {
+    const newPrompt = { ...prompt, id: nanoid() };
+    set((state) => ({ pendingPrompts: [...state.pendingPrompts, newPrompt] }));
+  },
+
+  resolvePrompt: (id, resolution) => {
+    console.log(`Prompt ${id} resolved with ${resolution}`);
+    set((state) => ({
+      pendingPrompts: state.pendingPrompts.filter((p) => p.id !== id),
+    }));
+  },
+
   reset: () => {
     const { seed, globalContext } = get();
     if (globalContext) {
-      get().initialize(seed, globalContext); // Re-initialize with the same seed and initial context
+      get().initialize(seed, globalContext);
     } else {
       set(getInitialState(seed));
     }

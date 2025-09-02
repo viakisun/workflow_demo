@@ -20,6 +20,9 @@ export interface RobotSpec {
   payload?: number;        // 0..1 (AGV)
   zone?: string;
   firmware?: { major: number; minor: number; patch: number };
+  task?: string; // Current task or status
+  moving?: boolean;
+  swappingWith?: string; // ID of robot it's swapping with
 }
 export interface Station { id: string; slots: number; queue: string[] }
 export interface Resources {
@@ -74,6 +77,7 @@ export interface Lane {
   deviceFilter: { type: RobotType } | { id: string };
   nodes: Node[];
   edges: Array<[string, string]>; // [fromId, toId]
+  cursors?: Record<string, string>; // robotId -> nodeId
 }
 export interface Workflow {
   workflowId: string;
@@ -98,7 +102,10 @@ export type ActionSpec =
   | { type: "balance_queue"; from: string[]; to: string[]; policy: "shortest_queue" }
   | { type: "if"; expr: string; then?: ActionSpec[]; else?: ActionSpec[] }
   | { type: "log"; fields?: string[] }
-  | { type: "release"; resource: "dock" | "charger"; id: string };
+  | { type: "release"; resource: "dock" | "charger"; id: string }
+  | { type: "handoff"; from: string; to: string; at: string }
+  | { type: "swap"; from: string; with: "NEAREST_IDLE"; taskContext: string[] }
+  | { type: "operator_prompt"; message: string; timeout?: string; timeoutAction?: ActionSpec };
 
 export interface Rule {
   id: string;

@@ -17,6 +17,7 @@ import { useEngineStore } from "@/store/engine";
 import { ToastProvider } from "./primitives/Toast";
 import EventLog from "./EventLog";
 import KpiPanel from "./kpi/KpiPanel";
+import { OperatorPromptContainer } from "./io/OperatorPrompt";
 import { tick } from "@/lib/engine/engine";
 import { loadSeed } from "@/lib/load-seed";
 import { GlobalContext } from "@/types/core";
@@ -87,6 +88,7 @@ export default function AppShell() {
       </ResizablePanelGroup>
       <ToastProvider />
       <KpiPanel />
+      <OperatorPromptContainer />
     </div>
   );
 }
