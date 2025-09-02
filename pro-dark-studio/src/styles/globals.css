@@ -5,25 +5,25 @@
 @layer base {
   :root {
     /* Surfaces & Text */
-    --bg: #0F1115;
-    --panel: #12151D;
-    --panel-2: #171B23;
-    --stroke: #232838;
-    --text: #E5E7EB;
-    --muted: #9AA4B2;
-    --subtle: #6B7280;
+    --bg: 222 47% 11%; /* #0F1115 */
+    --panel: 222 47% 13%; /* #12151D */
+    --panel-2: 222 47% 15%; /* #171B23 */
+    --stroke: 222 47% 25%; /* #232838 */
+    --text: 215 25% 90%; /* #E5E7EB */
+    --muted: 217 19% 67%; /* #9AA4B2 */
+    --subtle: 215 14% 47%; /* #6B7280 */
 
     /* Semantic Accents */
-    --accent: #22C55E;
-    --warn: #F59E0B;
-    --info: #3B82F6;
-    --danger: #EF4444;
+    --accent: 142 71% 47%; /* #22C55E */
+    --warn: 38 92% 50%; /* #F59E0B */
+    --info: 217 91% 60%; /* #3B82F6 */
+    --danger: 0 84% 60%; /* #EF4444 */
 
     /* Node Colors */
-    --node-trigger: #3B82F6;
-    --node-condition: #F59E0B;
-    --node-action: #10B981;
-    --node-end: #6B7280;
+    --node-trigger: 217 91% 60%; /* #3B82F6 */
+    --node-condition: 38 92% 50%; /* #F59E0B */
+    --node-action: 158 83% 40%; /* #10B981 */
+    --node-end: 215 14% 47%; /* #6B7280 */
 
     /* Radii & Shadows */
     --radius: 12px;
