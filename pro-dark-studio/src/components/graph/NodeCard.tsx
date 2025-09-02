@@ -5,6 +5,7 @@ import { PortHandle } from "./PortHandle";
 
 type Props = {
   id: string;
+  ref: string;
   kind: NodeKind;
   x: number;
   y: number;

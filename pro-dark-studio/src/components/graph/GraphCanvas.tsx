@@ -5,14 +5,19 @@ import NodeCard from "./NodeCard";
 import EdgePath from "./EdgePath";
 import { useCanvasPanZoom } from "@/hooks/useCanvasPanZoom";
 import { useGraphStore } from "@/store/graph";
+import { useWorkspaceStore } from "@/store/workspace";
 import { useMarquee } from "@/hooks/useMarquee";
 import MiniMap from "./MiniMap";
+import { NodeRegistryEntry } from "@/types/core";
+import { checkNodeConflicts } from "@/lib/conflict";
+import { snapToGrid } from "@/lib/geometry";
 
 const NODE_WIDTH = 224;
-const NODE_HEIGHT = 96; // Approximate height
+const NODE_HEIGHT = 96;
 
 export default function GraphCanvas() {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const { registry } = useWorkspaceStore();
   const {
     transform,
     nodes,
@@ -24,10 +29,32 @@ export default function GraphCanvas() {
     beginConnect,
     endConnect,
     updateMousePosition,
+    addNode,
   } = useGraphStore();
 
   useCanvasPanZoom(canvasRef);
-  const marquee = useMarquee(canvasRef, !tempEdge); // Disable marquee when connecting
+  const marquee = useMarquee(canvasRef, !tempEdge);
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    const nodeData = e.dataTransfer.getData("application/json");
+    if (!nodeData) return;
+
+    const node: NodeRegistryEntry = JSON.parse(nodeData);
+
+    const conflictCheck = checkNodeConflicts(node, nodes, registry);
+    if (!conflictCheck.enabled) {
+      console.warn("Conflict detected:", conflictCheck.details);
+      // TODO: Show toast notification
+      return;
+    }
+
+    const canvasBounds = canvasRef.current!.getBoundingClientRect();
+    const x = snapToGrid((e.clientX - canvasBounds.left - transform.x) / transform.scale - NODE_WIDTH / 2);
+    const y = snapToGrid((e.clientY - canvasBounds.top - transform.y) / transform.scale - NODE_HEIGHT / 2);
+
+    addNode(node.nodeId, node.type, node.title, x, y);
+  };
 
   useEffect(() => {
     if (!tempEdge) return;
@@ -85,6 +112,8 @@ export default function GraphCanvas() {
       ref={canvasRef}
       className="relative overflow-hidden bg-panel h-full"
       data-canvas-container
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={handleDrop}
       onMouseDown={(e) => {
         if (!e.target || !(e.target as HTMLElement).closest('[data-node]')) {
           select({ nodes: [], edges: [] })
@@ -149,6 +178,7 @@ export default function GraphCanvas() {
           <NodeCard
             key={n.id}
             id={n.id}
+            ref={n.ref}
             kind={n.kind}
             title={n.title}
             x={n.x}

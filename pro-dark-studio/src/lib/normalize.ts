@@ -2,6 +2,7 @@ import { Workflow, NodeKind } from "@/types/core";
 
 export type NodeVM = {
   id: string;
+  ref: string;
   kind: NodeKind;
   title: string;
   x: number;
@@ -31,7 +32,7 @@ export function toViewModels(
         y: (NODE_HEIGHT + V_GAP) * laneIndex,
       };
       const meta = getTitle(node.ref);
-      nodes.push({ ...meta, ...pos, id: node.id });
+      nodes.push({ ...meta, ...pos, id: node.id, ref: node.ref });
     });
     lane.edges.forEach(([from, to], edgeIndex) => {
       edges.push({ id: `${lane.laneId}:${edgeIndex}`, from, to });
